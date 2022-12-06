@@ -18,8 +18,10 @@ public class ClientVerticle extends AbstractVerticle {
 
       private void startClient(Vertx vertx){
         GraClient client = new GraClient(vertx);
+        for(int i = 0; i < 1000; i++) { // Server logs OK
+          client.sendEvent("1.2.3.5", "user1", "session1", "/");
+        }
 
-        client.sendEvent("1.2.3.4", "user1", "session1", "/"); // Server logs OK
         /*
         client.sendEvent("1.2.3.4", "user1", "session1", "/"); // Server logs OK
         client.sendEvent("2.2.3.4", "user1", "session1", "/page1"); // Server logs OK

@@ -1,5 +1,6 @@
 package com.Gateway_request_analyzer.client;
 
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
@@ -7,24 +8,22 @@ import io.vertx.core.http.WebSocket;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 
+import java.net.Socket;
+import java.util.Random;
+
 
 public class GraClient {
 
   public Vertx vertx;
-  public HttpClient client;
+  public Future<WebSocket> socket;
+  int responseCounter = 0;
 
-  public void Main(String[] args) throws InterruptedException{
-
-
-  }
   public GraClient(Vertx vertx){
     this.vertx = vertx;
-    this.client = vertx.createHttpClient();
+    connectToServer();
   }
 
   public void sendEvent(String ip, String userId, String session, String URI){
-
-    serverResponse();
 
     JsonObject jo = new JsonObject();
 
@@ -33,37 +32,45 @@ public class GraClient {
 
     Buffer json = Json.encodeToBuffer(jo);
 
+    socket.onSuccess(handler ->{
+        handler.writeBinaryMessage(json);
+        handler.binaryMessageHandler(res ->{
+            System.out.println("Response from server: " + res);
 
-    client.webSocket(3000, "localhost", "/", websocket -> {
+        });
+    });
+
+
+
+
+
+  }
+
+  private void connectToServer(){
+    int rand = randSetup();
+    this.socket = this.vertx.createHttpClient().webSocket(rand + 3000, "localhost", "/");
+  }
+  private int randSetup(){
+    Random rand = new Random();
+    return rand.nextInt(3);
+  }
+}
+
+/*
+client.webSocket(3001, "localhost", "/", websocket -> {
       if(websocket.succeeded()){
 
-        WebSocket socket = websocket.result();
+        this.socket = websocket.result();
 
         socket.writeBinaryMessage(json);
-        socket.handler(data -> System.out.println(data.toString()));
-        socket.end();
+        //socket.handler(data -> System.out.println(data.toString()));
+        socket.binaryMessageHandler(msg ->{
+          System.out.println("Response: " + msg);
+        });
 
 
       } else{
         System.out.println("Something went wrong" + websocket.cause().getCause());
       }
     });
-
-  }
-
-  private void serverResponse(){
-
-    vertx.createHttpServer().webSocketHandler(handler -> {
-      System.out.println("Received response from server");
-
-      handler.textMessageHandler(msg -> {
-
-        System.out.println("Message received: " + msg);
-      });
-
-      handler.end();
-
-    }).listen(3500);
-
-  }
-}
+ */

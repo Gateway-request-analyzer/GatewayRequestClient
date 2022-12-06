@@ -19,7 +19,7 @@
     <vertx.version>4.3.4</vertx.version>
     <junit-jupiter.version>5.7.0</junit-jupiter.version>
 
-    <main.verticle>com.Gateway_request_analyzer.client.ClientVerticle</main.verticle>
+    <main.verticle>com.Gateway_request_analyzer.client.DepVerticle</main.verticle>
     <launcher.class>io.vertx.core.Launcher</launcher.class>
   </properties>
 
@@ -64,6 +64,11 @@
       <version>${junit-jupiter.version}</version>
       <scope>test</scope>
     </dependency>
+      <dependency>
+          <groupId>io.vertx</groupId>
+          <artifactId>vertx-redis-client</artifactId>
+          <version>4.3.5</version>
+      </dependency>
   </dependencies>
 
   <build>
