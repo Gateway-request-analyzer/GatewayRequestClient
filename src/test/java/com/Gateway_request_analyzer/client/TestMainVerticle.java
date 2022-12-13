@@ -1,6 +1,5 @@
-package com.Gateway_request_analyzer.server;
+package com.Gateway_request_analyzer.client;
 
-import com.Gateway_request_analyzer.client.ClientVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;

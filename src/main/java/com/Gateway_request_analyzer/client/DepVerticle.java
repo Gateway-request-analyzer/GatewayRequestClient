@@ -6,8 +6,6 @@ import java.util.Random;
 
 public class DepVerticle extends AbstractVerticle {
 
-  int sendPort;
-  ClientVerticle cliVert;
 
   @Override
   public void start() throws Exception{
@@ -15,5 +13,4 @@ public class DepVerticle extends AbstractVerticle {
       vertx.deployVerticle(new ClientVerticle());
     }
   }
-
 }
