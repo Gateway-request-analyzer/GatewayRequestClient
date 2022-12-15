@@ -9,7 +9,8 @@ public class DepVerticle extends AbstractVerticle {
 
   @Override
   public void start() throws Exception{
-    for(int i = 0; i < 10; i++){
+    //amounts of clients started
+    for(int i = 0; i < 3; i++){
       vertx.deployVerticle(new ClientVerticle());
     }
   }

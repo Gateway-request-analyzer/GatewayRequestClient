@@ -5,6 +5,8 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.*;
 import io.vertx.core.spi.json.JsonCodec;
 
+import java.util.Random;
+
 
 public class ClientVerticle extends AbstractVerticle {
 
@@ -12,38 +14,20 @@ public class ClientVerticle extends AbstractVerticle {
   private WebSocket socket;
 
   @Override
-  public void start(Promise<Void> startPromise) throws Exception {
+  public void start() throws Exception {
 
-    GraClient client = new GraClient(vertx);
 
-      //startPromise.complete();
 
+      Random rand = new Random();
+      this.vertx.createHttpClient().webSocket(rand.nextInt(3) + 3000, "localhost", "/")
+        .onComplete(socket -> {
+          GraClient client = new GraClient(vertx, socket.result());
+        });
 
 
   }
+}
 
-      private void startClient(Vertx vertx){
-
-
-        /*
-        client.sendEvent("1.2.3.4", "user1", "session1", "/"); // Server logs OK
-        client.sendEvent("2.2.3.4", "user1", "session1", "/page1"); // Server logs OK
-
-        // Server logs that the request is rate limited, but we don't yet have a way to signal this back to the client. We'll deal with this later
-        client.sendEvent("3.2.3.4", "user1", "session1", "/page2");
-
-        // We wait some to clear the rate limit
-        Thread.sleep(2000);
-
-        vertx.wait(2000);
-
-        // The rate limit should be cleared and server should log OK
-        client.sendEvent("1.2.3.4", "user1", "session1", "/page3");
-        */
-
-
-    }
-  }
 
   /*
   * TODO:

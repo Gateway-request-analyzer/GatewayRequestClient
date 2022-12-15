@@ -20,9 +20,10 @@ public class GraClient {
   public WebSocket socket;
   int responseCounter = 0;
 
-  public GraClient(Vertx vertx) {
+  public GraClient(Vertx vertx, WebSocket socket) {
     this.vertx = vertx;
-    this.setSocket();
+    this.socket = socket;
+    multiSend();
   }
 
   public void sendEvent(String ip, String userId, String session, String URI) {
@@ -40,6 +41,7 @@ public class GraClient {
       });
   }
 
+  //amounts of requests sent
   private void multiSend(){
     for(int i = 0; i < 20; i++) { // Server logs OK
       this.sendEvent("1.2.3.5", "user1", "session1", "/");
@@ -63,13 +65,7 @@ public class GraClient {
     return this.vertx.createHttpClient().webSocket(rand.nextInt(2) + 3000, "localhost", "/");
   }
 
-  private void setSocket(){
-    Random rand = new Random();
-    this.vertx.createHttpClient().webSocket(rand.nextInt(3) + 3000, "localhost", "/")
-      .onComplete(handler -> {
-        this.socket = handler.result();
-      });
-  }
+
 }
 /*
 client.webSocket(3001, "localhost", "/", websocket -> {
