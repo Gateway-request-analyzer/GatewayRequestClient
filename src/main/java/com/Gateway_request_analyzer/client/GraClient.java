@@ -43,13 +43,18 @@ public class GraClient {
 
   //amounts of requests sent
   private void multiSend(){
-    for(int i = 0; i < 20; i++) { // Server logs OK
+    for(int i = 0; i < 10; i++) { // Server logs OK
       this.sendEvent("1.2.3.5", "user1", "session1", "/");
+      try {
+        Thread.sleep(500);
+      }
+      catch (Exception e) {
+        System.out.println(e);
+      }
     }
   }
 
   private void connectToServer() {
-
 
     clientToServerSetup().onComplete(handler -> {
       this.multiSend();

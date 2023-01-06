@@ -6,11 +6,11 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="starter" />
+        <module name="GatewayRequestClient" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="starter" target="11" />
+      <module name="GatewayRequestClient" target="11" />
     </bytecodeTargetLevel>
   </component>
 </project>

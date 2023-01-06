@@ -24,14 +24,5 @@ public class ClientVerticle extends AbstractVerticle {
           GraClient client = new GraClient(vertx, socket.result());
         });
 
-
   }
 }
-
-
-  /*
-  * TODO:
-  *  1: Sätt upp dummy object för att skicka till server
-  *  2: Få detta att packa binärt för överföring, översätt på båda sidor
-  *
-  * */
