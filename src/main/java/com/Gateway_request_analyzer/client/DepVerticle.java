@@ -2,15 +2,16 @@ package com.Gateway_request_analyzer.client;
 
 import io.vertx.core.AbstractVerticle;
 
-import java.util.Random;
-
+/**
+ * Class used solely for testing. Creates requested amount of clients.
+ */
 public class DepVerticle extends AbstractVerticle {
 
 
   @Override
   public void start() throws Exception{
     //amounts of clients started
-    for(int i = 0; i < 3; i++){
+    for(int i = 0; i < 1; i++){
       vertx.deployVerticle(new ClientVerticle());
     }
   }

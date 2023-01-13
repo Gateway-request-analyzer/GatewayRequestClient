@@ -3,17 +3,15 @@ package com.Gateway_request_analyzer.client;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.WebSocket;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-
-import java.net.Socket;
 import java.util.Random;
-import java.util.concurrent.FutureTask;
 
-
+/**
+ * Class for packaging and sending data to GRASever.
+ * Can also receive data on open connections
+ */
 public class GraClient {
 
   public Vertx vertx;

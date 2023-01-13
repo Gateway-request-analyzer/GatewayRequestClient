@@ -1,5 +1,6 @@
 package com.Gateway_request_analyzer.client;
 
+
 public class Event {
   private String ip, userId, session, URI;
 
