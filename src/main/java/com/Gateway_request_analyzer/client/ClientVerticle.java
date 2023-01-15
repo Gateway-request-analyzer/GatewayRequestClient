@@ -16,12 +16,12 @@ public class ClientVerticle extends AbstractVerticle {
   @Override
   public void start() throws Exception {
 
-
-
       Random rand = new Random();
-      this.vertx.createHttpClient().webSocket(rand.nextInt(3) + 3000, "localhost", "/")
+      int randPort = rand.nextInt(3) + 3000;
+      this.vertx.createHttpClient().webSocket(3000, "localhost", "/")
         .onComplete(socket -> {
-          GraClient client = new GraClient(vertx, socket.result());
+            HttpServer server = this.vertx.createHttpServer();
+            GraClient client = new GraClient(vertx, socket.result(), server);
         });
 
 
