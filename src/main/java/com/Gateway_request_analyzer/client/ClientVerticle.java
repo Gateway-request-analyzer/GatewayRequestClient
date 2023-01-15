@@ -1,12 +1,13 @@
 package com.Gateway_request_analyzer.client;
 
 import io.vertx.core.*;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.*;
-import io.vertx.core.spi.json.JsonCodec;
-
 import java.util.Random;
 
+/**
+ * Class for opening connection to GRAServer via websocket.
+ * A GraClient instance is created if the connection is successfull.
+ */
 
 public class ClientVerticle extends AbstractVerticle {
 
@@ -24,14 +25,5 @@ public class ClientVerticle extends AbstractVerticle {
             GraClient client = new GraClient(vertx, socket.result(), server);
         });
 
-
   }
 }
-
-
-  /*
-  * TODO:
-  *  1: Sätt upp dummy object för att skicka till server
-  *  2: Få detta att packa binärt för överföring, översätt på båda sidor
-  *
-  * */

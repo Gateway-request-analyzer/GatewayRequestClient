@@ -2,8 +2,9 @@ package com.Gateway_request_analyzer.client;
 
 import io.vertx.core.AbstractVerticle;
 
-import java.util.Random;
-
+/**
+ * Class used solely for testing. Creates requested amount of clients.
+ */
 public class DepVerticle extends AbstractVerticle {
 
 
