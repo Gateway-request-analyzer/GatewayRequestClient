@@ -6,13 +6,11 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.*;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.net.Socket;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.FutureTask;
 
 
@@ -21,6 +19,8 @@ public class GraClient {
   public Vertx vertx;
   public WebSocket socket;
   private HttpServer server;
+
+  //list of blocked users/ip/sessions
   private HashSet<String> blockedList = new HashSet<>();
   int responseCounter = 0;
 
@@ -29,12 +29,12 @@ public class GraClient {
     this.socket = socket;
     this.server = server;
     setUpHandlers();
-    //multiSend();
   }
 
   public void sendEvent(String ip, String userId, String session) {
 
-    if(!blockedList.contains(ip) || !blockedList.contains(userId) || !blockedList.contains(session)) {
+    //check if any given parameter is already blocked
+    if(!blockedList.contains(ip) && !blockedList.contains(userId) && !blockedList.contains(session)) {
 
       JsonObject jo = new JsonObject();
       jo.put("ip", ip).put("userId", userId).put("session", session);
@@ -46,52 +46,19 @@ public class GraClient {
     }
   }
 
-  //amounts of requests sent
-  private void multiSend(){
-
-    for(int i = 0; i < 50; i++) { // Server logs OK
-      this.sendEvent("1.2.3.3", "user1", "session1");
-      try {
-        Thread.sleep(50);
-      }catch(Exception e){
-        System.out.println("fel");
-      }
-
-    }
-
-/*
-    this.sendEvent("1.2.3.5", "user1", "session1", "/");
-
-
-
-    this.sendEvent("1.2.3.5", "user1", "session1", "/");
-
-    this.sendEvent("1.2.3.5", "user1", "session1", "/");
-
-    this.sendEvent("1.2.3.5", "user1", "session1", "/");
-*/
-
-
-  }
-
-  private void connectToServer() {
-
-
-    clientToServerSetup().onComplete(handler -> {
-      this.multiSend();
-    }).onFailure(error -> {
-      System.out.println("Connection failed: " + error.getMessage());
-    });
-
-  }
-
-
-  private Future<WebSocket> clientToServerSetup() {
-    Random rand = new Random();
-    int randPort = rand.nextInt(2) + 3000;
-    return this.vertx.createHttpClient().webSocket(3000, "localhost", "/");
-  }
-
+  /**
+   * Sets up the required handlers used by the client
+   *
+   * server.requestHandler handles incoming HTTP-requests and
+   * forwards headers to GRAserver
+   *
+   * socket.BinaryMessageHandler handles replies/messages from GRAserver which
+   * are currently exclusively from pub/sub. The response is always a
+   * JsonObject Buffer
+   *
+   * vertx.setPeriodic unblocks the currently blocked users/ip/sessions by
+   * emptying the hashSet each minute
+   */
   private void setUpHandlers(){
 
     this.server.requestHandler(handler ->{
@@ -105,28 +72,27 @@ public class GraClient {
       System.out.println("Response from server: " + res);
       JsonObject json = (JsonObject) Json.decodeValue(res);
 
-      blockedList.add(json.getString("identifier"));
-      System.out.println("This identifier was blocked: " + json.getString("identifier"));
+      //check if the message is for a single user/ip/sessions, type is "single"
+      if(Objects.equals(json.getString("type"), "single")) {
+        blockedList.add(json.getString("identifier"));
+        System.out.println("This identifier was blocked: " + json.getString("identifier"));
+
+      //check if the message is to update the blockedList, type is "saveState"
+      }else if(Objects.equals(json.getString("type"), "saveState")){
+
+        //remove "type":"saveState" and iterate over entire list to add each value to blockList
+        json.remove("type");
+        for(Map.Entry<String, Object> item : json){
+          String s = (String) item.getValue();
+          System.out.println("Value from saveState: " + s);
+          blockedList.add(s);
+        }
+      }
 
     });
 
+    this.vertx.setPeriodic(60000, handler ->{
+      this.blockedList = new HashSet<>();
+    });
   }
 }
-/*
-client.webSocket(3001, "localhost", "/", websocket -> {
-      if(websocket.succeeded()){
-
-        this.socket = websocket.result();
-
-        socket.writeBinaryMessage(json);
-        //socket.handler(data -> System.out.println(data.toString()));
-        socket.binaryMessageHandler(msg ->{
-          System.out.println("Response: " + msg);
-        });
-
-
-      } else{
-        System.out.println("Something went wrong" + websocket.cause().getCause());
-      }
-    });
- */

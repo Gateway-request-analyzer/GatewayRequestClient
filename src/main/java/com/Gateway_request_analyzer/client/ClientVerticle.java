@@ -19,6 +19,8 @@ public class ClientVerticle extends AbstractVerticle {
 
       Random rand = new Random();
       int randPort = rand.nextInt(3) + 3000;
+      //use randPort instead of static "3000" port in case of 3 clients
+      //change bound of nextInt in case of more clients
       this.vertx.createHttpClient().webSocket(3000, "localhost", "/")
         .onComplete(socket -> {
             HttpServer server = this.vertx.createHttpServer();
