@@ -1,4 +1,5 @@
 #!/bin/zsh
+#!/bin/bash
 
 # Configure URL to the GRA client HTTP server (the "gateway")
 GRA_GATEWAY=http://localhost:7890
