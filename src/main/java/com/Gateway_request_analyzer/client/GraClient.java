@@ -42,7 +42,7 @@ public class GraClient {
       Buffer json = Json.encodeToBuffer(jo);
       socket.writeBinaryMessage(json);
     }else{
-      System.out.println("Currently blocked");
+      System.out.println("Event currently blocked: " + ip + " " + userId + " " + session);
     }
   }
 
