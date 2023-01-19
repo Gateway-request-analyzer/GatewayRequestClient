@@ -22,6 +22,8 @@ public class GraClient {
 
   //list of blocked users/ip/sessions
   private HashSet<String> blockedList = new HashSet<>();
+  private HashSet<String> blockedListIP = new HashSet<>();
+  private HashSet<String> blockedListSession = new HashSet<>();
   int responseCounter = 0;
 
   public GraClient(Vertx vertx, WebSocket socket, HttpServer server) {
@@ -63,8 +65,10 @@ public class GraClient {
 
     this.server.requestHandler(handler ->{
       MultiMap headers = handler.headers();
+      // Check if event is ok here, and send appropriate response
+      // split this into 2 functions
       sendEvent(headers.get("ip_address"), headers.get("userId"), headers.get("session"));
-      handler.response().end();
+      handler.response().setStatusCode(200).end();
 
     }).listen(7890);
 
@@ -85,6 +89,8 @@ public class GraClient {
         for(Map.Entry<String, Object> item : json){
           String s = (String) item.getValue();
           System.out.println("Value from saveState: " + s);
+          //Need to remember time in blocked List
+          // add timestamp to jsonObject
           blockedList.add(s);
         }
       }
