@@ -9,6 +9,7 @@ import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+import java.math.BigDecimal;
 import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.FutureTask;
@@ -21,10 +22,11 @@ public class GraClient {
   private HttpServer server;
 
   //list of blocked users/ip/sessions
-  private HashSet<String> blockedList = new HashSet<>();
-  private HashSet<String> blockedListIP = new HashSet<>();
-  private HashSet<String> blockedListSession = new HashSet<>();
-  int responseCounter = 0;
+
+  private HashMap<String, Long> blockedIP = new HashMap<>();
+  private HashMap<String, Long> blockedSession = new HashMap<>();
+  private HashMap<String, Long> blockedUserId = new HashMap<>();
+  int statuscode = 429;
 
   public GraClient(Vertx vertx, WebSocket socket, HttpServer server) {
     this.vertx = vertx;
@@ -35,17 +37,11 @@ public class GraClient {
 
   public void sendEvent(String ip, String userId, String session) {
 
-    //check if any given parameter is already blocked
-    if(!blockedList.contains(ip) && !blockedList.contains(userId) && !blockedList.contains(session)) {
-
       JsonObject jo = new JsonObject();
       jo.put("ip", ip).put("userId", userId).put("session", session);
 
       Buffer json = Json.encodeToBuffer(jo);
       socket.writeBinaryMessage(json);
-    }else{
-      System.out.println("Event currently blocked: " + ip + " " + userId + " " + session);
-    }
   }
 
   /**
@@ -64,11 +60,17 @@ public class GraClient {
   private void setUpHandlers(){
 
     this.server.requestHandler(handler ->{
+
       MultiMap headers = handler.headers();
-      // Check if event is ok here, and send appropriate response
-      // split this into 2 functions
-      sendEvent(headers.get("ip_address"), headers.get("userId"), headers.get("session"));
-      handler.response().setStatusCode(200).end();
+      String ip = headers.get("ip_address");
+      String session = headers.get("session");
+      String userId = headers.get("userId");
+      if(!blockedIP.containsKey(ip) && !blockedUserId.containsKey(userId) && !blockedSession.containsKey(session)){
+        sendEvent(headers.get("ip_address"), headers.get("userId"), headers.get("session"));
+        statuscode = 200;
+      }
+      handler.response().setStatusCode(statuscode).end();
+      statuscode = 429;
 
     }).listen(7890);
 
@@ -77,28 +79,50 @@ public class GraClient {
       JsonObject json = (JsonObject) Json.decodeValue(res);
 
       //check if the message is for a single user/ip/sessions, type is "single"
-      if(Objects.equals(json.getString("type"), "single")) {
-        blockedList.add(json.getString("identifier"));
-        System.out.println("This identifier was blocked: " + json.getString("identifier"));
+      if(Objects.equals(json.getString("publishType"), "single")) {
+
+        switch(json.getString("type")){
+          case "ips":
+            blockedIP.put(json.getString("identifier"), Long.parseLong(json.getString("blockedTime")));
+            break;
+          case "sessions":
+            blockedSession.put(json.getString("identifier"), Long.parseLong(json.getString("blockedTime")));
+            break;
+          case "userIds":
+            blockedUserId.put(json.getString("identifier"), Long.parseLong(json.getString("blockedTime")));
+            break;
+          default: break;
+        }
 
       //check if the message is to update the blockedList, type is "saveState"
-      }else if(Objects.equals(json.getString("type"), "saveState")){
+      }else if(Objects.equals(json.getString("publishType"), "saveState")){
 
-        //remove "type":"saveState" and iterate over entire list to add each value to blockList
-        json.remove("type");
-        for(Map.Entry<String, Object> item : json){
-          String s = (String) item.getValue();
-          System.out.println("Value from saveState: " + s);
-          //Need to remember time in blocked List
-          // add timestamp to jsonObject
-          blockedList.add(s);
+        // iterate over entire list to add each value to blockList
+        // Key = IP/session/userID, value = time of expiry
+        for(Map.Entry<String, Object> item : json.getJsonObject("ips")){
+          blockedIP.put(item.getKey(), new BigDecimal((String) item.getValue()).longValue());
+        }
+        // iterate over entire list to add each value to blockList
+        for(Map.Entry<String, Object> item : json.getJsonObject("sessions")){
+          blockedSession.put(item.getKey(), new BigDecimal((String) item.getValue()).longValue());
+        }
+        // iterate over entire list to add each value to blockList
+        for(Map.Entry<String, Object> item : json.getJsonObject("userIds")){
+          blockedUserId.put(item.getKey(), new BigDecimal((String) item.getValue()).longValue());
         }
       }
-
     });
+  }
 
-    this.vertx.setPeriodic(60000, handler ->{
-      this.blockedList = new HashSet<>();
-    });
+  // Iterate over every list and remove expired values
+  // Call this periodically or every time a new user is blocked
+  private void updateBlockedList(){
+
+    blockedIP.forEach(
+      (key, value) -> {
+
+      }
+
+    );
   }
 }
