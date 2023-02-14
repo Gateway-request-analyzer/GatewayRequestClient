@@ -1,4 +1,4 @@
-package com.Gateway_request_analyzer.client;
+package Client;
 
 import io.vertx.core.AbstractVerticle;
 

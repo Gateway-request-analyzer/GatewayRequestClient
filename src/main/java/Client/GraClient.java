@@ -1,4 +1,4 @@
-package com.Gateway_request_analyzer.client;
+package Client;
 
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
@@ -7,7 +7,6 @@ import io.vertx.core.http.*;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 
@@ -24,10 +23,9 @@ public class GraClient {
   private HashMap<String, Long> blockedUserId = new HashMap<>();
   int statusCode = 429;
 
-  public GraClient(Vertx vertx, WebSocket socket, HttpServer server) {
+  public GraClient(Vertx vertx, WebSocket socket) {
     this.vertx = vertx;
     this.socket = socket;
-    this.server = server;
     setUpHandlers();
   }
 
@@ -55,23 +53,7 @@ public class GraClient {
    */
   private void setUpHandlers(){
 
-    this.server.requestHandler(handler ->{
-      updateBlockedList();
 
-      MultiMap headers = handler.headers();
-      String ip = headers.get("ip_address");
-      String session = headers.get("session");
-      String userId = headers.get("userId");
-      if(!blockedIP.containsKey(ip) && !blockedUserId.containsKey(userId) && !blockedSession.containsKey(session)){
-        sendEvent(headers.get("ip_address"), headers.get("userId"), headers.get("session"));
-        statusCode = 200;
-      } else {
-        System.out.println("This user is currently blocked: " + ip);
-        statusCode = 429;
-      }
-      handler.response().setStatusCode(statusCode).end();
-
-    }).listen(7890);
 
     this.socket.binaryMessageHandler(res -> {
 
@@ -126,7 +108,7 @@ public class GraClient {
 
   // Iterate over every list and remove expired values
   // Call this periodically or every time a new user is blocked
-  private void updateBlockedList(){
+  public void updateBlockedList(){
     blockListHelper(blockedIP);
     blockListHelper(blockedSession);
     blockListHelper(blockedUserId);
@@ -135,5 +117,9 @@ public class GraClient {
   private void blockListHelper(HashMap<String, Long> currentList){
     long currentTime = System.currentTimeMillis();
     currentList.entrySet().removeIf(entry -> entry.getValue() < currentTime);
+  }
+
+  public boolean checkBlockedList(String ip, String session, String userId){
+    return (!blockedIP.containsKey(ip) && !blockedUserId.containsKey(userId) && !blockedSession.containsKey(session));
   }
 }

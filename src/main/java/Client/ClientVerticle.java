@@ -1,4 +1,4 @@
-package com.Gateway_request_analyzer.client;
+package Client;
 
 import io.vertx.core.*;
 import io.vertx.core.http.*;
@@ -24,7 +24,7 @@ public class ClientVerticle extends AbstractVerticle {
       this.vertx.createHttpClient().webSocket(3000, "localhost", "/")
         .onComplete(socket -> {
             HttpServer server = this.vertx.createHttpServer();
-            GraClient client = new GraClient(vertx, socket.result(), server);
+            GraClient client = new GraClient(vertx, socket.result());
         });
 
   }

@@ -4,7 +4,7 @@
 GRA_GATEWAY=http://localhost:7890
 
 # normal-user.sh - Typical dating app user
-curl -X POST -H "userId: bbc123" -H "session: null" -H "ip_address: 3.2.3.4"    $GRA_GATEWAY/login                                  # The user opens the app and login. This returns the session that will be used for all following requests.
+curl -X POST -H "userId: bbc123" -H "session: null" -H "ip_address: 3.2.3.4" -H "Request Method: GET" -H "Request URL: https://catfact.ninja/breeds"    $GRA_GATEWAY/login                                  # The user opens the app and login. This returns the session that will be used for all following requests.
 sleep 0.2
 curl -X POST -H "userId: bbc123" -H "session: abcdef" -H "ip_address: 3.2.3.4"  $GRA_GATEWAY/config                                 # The app automatically fetches the app configuration
 sleep 0.2
