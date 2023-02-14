@@ -1,18 +1,14 @@
 package com.Gateway_request_analyzer.client;
 
-import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.*;
 import io.vertx.core.json.Json;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.math.BigDecimal;
-import java.net.Socket;
 import java.util.*;
-import java.util.concurrent.FutureTask;
 
 
 public class GraClient {
@@ -26,7 +22,7 @@ public class GraClient {
   private HashMap<String, Long> blockedIP = new HashMap<>();
   private HashMap<String, Long> blockedSession = new HashMap<>();
   private HashMap<String, Long> blockedUserId = new HashMap<>();
-  int statuscode = 429;
+  int statusCode = 429;
 
   public GraClient(Vertx vertx, WebSocket socket, HttpServer server) {
     this.vertx = vertx;
@@ -60,6 +56,7 @@ public class GraClient {
   private void setUpHandlers(){
 
     this.server.requestHandler(handler ->{
+      updateBlockedList();
 
       MultiMap headers = handler.headers();
       String ip = headers.get("ip_address");
@@ -67,29 +64,32 @@ public class GraClient {
       String userId = headers.get("userId");
       if(!blockedIP.containsKey(ip) && !blockedUserId.containsKey(userId) && !blockedSession.containsKey(session)){
         sendEvent(headers.get("ip_address"), headers.get("userId"), headers.get("session"));
-        statuscode = 200;
+        statusCode = 200;
+      } else {
+        System.out.println("This user is currently blocked: " + ip);
+        statusCode = 429;
       }
-      handler.response().setStatusCode(statuscode).end();
-      statuscode = 429;
+      handler.response().setStatusCode(statusCode).end();
 
     }).listen(7890);
 
     this.socket.binaryMessageHandler(res -> {
+
       System.out.println("Response from server: " + res);
       JsonObject json = (JsonObject) Json.decodeValue(res);
 
       //check if the message is for a single user/ip/sessions, type is "single"
       if(Objects.equals(json.getString("publishType"), "single")) {
 
-        switch(json.getString("type")){
-          case "ips":
-            blockedIP.put(json.getString("identifier"), Long.parseLong(json.getString("blockedTime")));
+        switch(json.getString("actionType")){
+          case "blockedByIp":
+            blockedIP.put(json.getString("value"), Long.parseLong(json.getString("blockedTime")));
             break;
-          case "sessions":
-            blockedSession.put(json.getString("identifier"), Long.parseLong(json.getString("blockedTime")));
+          case "blockedBySession":
+            blockedSession.put(json.getString("value"), Long.parseLong(json.getString("blockedTime")));
             break;
-          case "userIds":
-            blockedUserId.put(json.getString("identifier"), Long.parseLong(json.getString("blockedTime")));
+          case "blockedByUserId":
+            blockedUserId.put(json.getString("value"), Long.parseLong(json.getString("blockedTime")));
             break;
           default: break;
         }
@@ -99,16 +99,26 @@ public class GraClient {
 
         // iterate over entire list to add each value to blockList
         // Key = IP/session/userID, value = time of expiry
-        for(Map.Entry<String, Object> item : json.getJsonObject("ips")){
-          blockedIP.put(item.getKey(), new BigDecimal((String) item.getValue()).longValue());
-        }
-        // iterate over entire list to add each value to blockList
-        for(Map.Entry<String, Object> item : json.getJsonObject("sessions")){
-          blockedSession.put(item.getKey(), new BigDecimal((String) item.getValue()).longValue());
-        }
-        // iterate over entire list to add each value to blockList
-        for(Map.Entry<String, Object> item : json.getJsonObject("userIds")){
-          blockedUserId.put(item.getKey(), new BigDecimal((String) item.getValue()).longValue());
+        json.remove("publishType");
+        // {"publishType":"saveState","1.2.3.4":{"source":"rateLimiter","actionType":"blockedByIp","blockedTime":"1675426181182","value":"1.2.3.4","publishType":"single"},"abc123":{"source":"rateLimiter","actionType":"blockedByUserId","blockedTime":"1675426181186","value":"abc123","publishType":"single"},"abcdef":{"source":"rateLimiter","actionType":"blockedBySession","blockedTime":"1675426181184","value":"abcdef","publishType":"single"}}
+        for(Map.Entry<String, Object> item : json){
+
+          System.out.println(item.getValue());
+          JsonObject currentJson = new JsonObject(String.valueOf(item.getValue()));
+
+          switch(currentJson.getString("actionType")){
+            case "blockedByIp":
+              blockedIP.put(currentJson.getString("value"), Long.parseLong(currentJson.getString("blockedTime")));
+              break;
+            case "blockedBySession":
+              blockedSession.put(currentJson.getString("value"), Long.parseLong(currentJson.getString("blockedTime")));
+              break;
+            case "blockedByUserId":
+              blockedUserId.put(currentJson.getString("value"), Long.parseLong(currentJson.getString("blockedTime")));
+              break;
+            default:
+              break;
+          }
         }
       }
     });
@@ -117,12 +127,13 @@ public class GraClient {
   // Iterate over every list and remove expired values
   // Call this periodically or every time a new user is blocked
   private void updateBlockedList(){
+    blockListHelper(blockedIP);
+    blockListHelper(blockedSession);
+    blockListHelper(blockedUserId);
+  }
 
-    blockedIP.forEach(
-      (key, value) -> {
-
-      }
-
-    );
+  private void blockListHelper(HashMap<String, Long> currentList){
+    long currentTime = System.currentTimeMillis();
+    currentList.entrySet().removeIf(entry -> entry.getValue() < currentTime);
   }
 }
