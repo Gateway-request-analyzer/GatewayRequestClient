@@ -22,6 +22,10 @@ public class GraProxy {
     this.internalClient = internalClient;
     this.webClient = WebClient.create(vertx);
     this.setUpHandlers();
+    /**
+     * TODO:
+     * Read config from file to
+     */
   }
 
   private void setUpHandlers(){
@@ -32,8 +36,9 @@ public class GraProxy {
       String ip = headers.get("ip_address");
       String session = headers.get("session");
       String userId = headers.get("userId");
-      String URL = headers.get("Request URL");
-      String reqMethod = headers.get("Request Method");
+      String URL = headers.get("RequestURL");
+      String reqMethod = headers.get("RequestMethod");
+      System.out.println("URL from header: " + URL);
       if(internalClient.checkBlockedList(ip, session, userId)){
         internalClient.sendEvent(headers.get("ip_address"), headers.get("userId"), headers.get("session"));
         // TODO: fetch public API and return data as response
@@ -43,18 +48,24 @@ public class GraProxy {
         System.out.println("This user is currently blocked: " + ip);
         statusCode = 429;
       }
-      handler.response().setStatusCode(statusCode).end();
-
     }).listen(7890);
     System.out.println("handlers set up");
   }
 
   private void proxyEndpointFetch(String URL, String reqMethod, HttpServerRequest request){
+
+    String actualURL = URL.replace("GRAProxy.com/", "");
+    /**
+     * TODO:
+     * Switch case on reqMethod
+     *
+      */
     this.webClient
-      .getAbs(URL)
+      .getAbs(actualURL)
       .send()
       .onSuccess(handler -> {
         System.out.println("Message body received: " + handler.body().toString());
+        request.response().setStatusCode(200).end(handler.body());
 
       }).onFailure(err -> {
         System.out.println("Error checking cat breeds: " + err.getMessage());

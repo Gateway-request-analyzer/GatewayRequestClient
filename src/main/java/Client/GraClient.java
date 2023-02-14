@@ -21,7 +21,6 @@ public class GraClient {
   private HashMap<String, Long> blockedIP = new HashMap<>();
   private HashMap<String, Long> blockedSession = new HashMap<>();
   private HashMap<String, Long> blockedUserId = new HashMap<>();
-  int statusCode = 429;
 
   public GraClient(Vertx vertx, WebSocket socket) {
     this.vertx = vertx;
@@ -52,8 +51,6 @@ public class GraClient {
    * emptying the hashSet each minute
    */
   private void setUpHandlers(){
-
-
 
     this.socket.binaryMessageHandler(res -> {
 

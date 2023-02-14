@@ -6,6 +6,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="starter" />
         <module name="GRAProxy" />
         <module name="GatewayRequestClient" />
       </profile>
@@ -13,6 +14,7 @@
     <bytecodeTargetLevel>
       <module name="GatewayRequestClient" target="11" />
       <module name="GRAProxy" target="11" />
+      <module name="starter" target="11" />
     </bytecodeTargetLevel>
   </component>
 </project>

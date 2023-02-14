@@ -24,7 +24,6 @@ public class ProxyVerticle extends AbstractVerticle {
     this.vertx.createHttpClient().webSocket(3000, "localhost", "/")
       .onComplete(socket -> {
         HttpServer server = this.vertx.createHttpServer();
-
         GraClient client = new GraClient(vertx, socket.result());
         GraProxy proxy = new GraProxy(vertx, server, client);
       });
