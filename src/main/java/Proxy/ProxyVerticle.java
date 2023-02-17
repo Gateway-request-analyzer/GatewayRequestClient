@@ -4,7 +4,6 @@ import Client.GraClient;
 import io.vertx.core.*;
 import io.vertx.core.http.*;
 
-import java.util.List;
 
 public class ProxyVerticle extends AbstractVerticle {
 
@@ -32,19 +31,3 @@ public class ProxyVerticle extends AbstractVerticle {
 
 }
 
-/**
- * TODO:
- * In verticle:
- * Open server connection
- *
- * Send connection to Proxy (Start proxy)
- * Start Client
- * Read config
- *
- * In Proxy:
- * HTTP-server to accept requests & forward to endpoint
- * Hashmaps for blocked addresses
- *
- * Start client
- *
-* */
