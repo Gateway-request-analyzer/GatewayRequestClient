@@ -15,10 +15,12 @@ public class GraProxy {
   private GraClient internalClient;
   private WebClient webClient;
   private int statusCode;
+  private boolean connectionStatus;
 
   public GraProxy(Vertx vertx, HttpServer server, GraClient internalClient){
     this.vertx = vertx;
     this.server = server;
+    this.connectionStatus = true;
     this.internalClient = internalClient;
     this.webClient = WebClient.create(vertx);
     this.setUpHandlers();
@@ -29,6 +31,8 @@ public class GraProxy {
   }
 
   private void setUpHandlers(){
+
+
     this.server.requestHandler(handler ->{
       internalClient.updateBlockedList();
 
@@ -38,11 +42,17 @@ public class GraProxy {
       String userId = headers.get("userId");
       //Vi vill nog inte kolla på headern här, se funktionen nedan. Kan även vara att portar etc följer med. Hitta andra URI-funktioner.
       //String URL = headers.get("RequestURL");
+
       String URL = handler.absoluteURI();
       String reqMethod = headers.get("RequestMethod");
       System.out.println("URL from header: " + URL);
       if(internalClient.checkBlockedList(ip, session, userId)){
-        internalClient.sendEvent(headers.get("ip_address"), headers.get("userId"), headers.get("session"));
+
+        if(connectionStatus){
+          internalClient.sendEvent(headers.get("ip_address"), headers.get("userId"), headers.get("session"));
+        }
+
+
         // TODO: fetch public API and return data as response
         this.proxyEndpointFetch(URL, reqMethod, handler);
        // statusCode = 200;
@@ -56,7 +66,6 @@ public class GraProxy {
 
   private void proxyEndpointFetch(String URL, String reqMethod, HttpServerRequest request){
 
-
     /**
      * TODO:
      * Om det är Post request måste all data skickas med.
@@ -64,7 +73,8 @@ public class GraProxy {
      * JWT token måste också autentiseras här utöver GRAclient.
      * Borde gå att kolla på URL-delen efter domänen, hitta aktuell funktion. Domänen kan förändras. (Split on first slash)
      */
-    String actualURL = URL.replace("GRAProxy.com/", "");
+    String[] prelString = URL.split("/", 3);
+    String actualURL = "https://" + prelString[2];
 
     this.webClient
       .getAbs(actualURL)
@@ -78,4 +88,10 @@ public class GraProxy {
       });
 
   }
+
+  public void setConnectionStatus(boolean status){
+    this.connectionStatus = status;
+  }
+
+
 }

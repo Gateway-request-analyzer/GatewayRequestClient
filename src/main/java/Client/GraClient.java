@@ -7,7 +7,9 @@ import io.vertx.core.http.*;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 
+import java.net.ConnectException;
 import java.util.*;
+import java.util.function.Consumer;
 
 
 public class GraClient {
@@ -28,13 +30,14 @@ public class GraClient {
     setUpHandlers();
   }
 
-  public void sendEvent(String ip, String userId, String session) {
+  public void sendEvent(String ip, String userId, String session){
 
       JsonObject jo = new JsonObject();
       jo.put("ip", ip).put("userId", userId).put("session", session);
 
       Buffer json = Json.encodeToBuffer(jo);
       socket.writeBinaryMessage(json);
+
   }
 
   /**
@@ -118,5 +121,9 @@ public class GraClient {
 
   public boolean checkBlockedList(String ip, String session, String userId){
     return (!blockedIP.containsKey(ip) && !blockedUserId.containsKey(userId) && !blockedSession.containsKey(session));
+  }
+
+  public void setSocket(WebSocket socket){
+    this.socket = socket;
   }
 }
