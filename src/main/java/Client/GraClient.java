@@ -30,13 +30,15 @@ public class GraClient {
     setUpHandlers();
   }
 
-  public void sendEvent(String ip, String userId, String session){
+  public void sendEvent(String ip, String userId, String session) throws RuntimeException{
 
       JsonObject jo = new JsonObject();
       jo.put("ip", ip).put("userId", userId).put("session", session);
 
       Buffer json = Json.encodeToBuffer(jo);
-      socket.writeBinaryMessage(json);
+      socket.writeBinaryMessage(json).onFailure(e -> {
+        throw new RuntimeException("failed to send event");
+      });
 
   }
 

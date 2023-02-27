@@ -25,6 +25,7 @@ public class ProxyVerticle extends AbstractVerticle {
 
 
   this.clientSetup();
+  vertx.deployVerticle(new AuthServerVerticle());
 
 
   }

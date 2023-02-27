@@ -73,8 +73,8 @@ public class GraProxy {
      * JWT token måste också autentiseras här utöver GRAclient.
      * Borde gå att kolla på URL-delen efter domänen, hitta aktuell funktion. Domänen kan förändras. (Split on first slash)
      */
-    String[] prelString = URL.split("/", 3);
-    String actualURL = "https://" + prelString[2];
+    String[] prelString = URL.split("/", 4);
+    String actualURL = "http://" + prelString[3];
 
     this.webClient
       .getAbs(actualURL)
