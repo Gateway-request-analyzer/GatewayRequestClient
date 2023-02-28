@@ -3,6 +3,7 @@ package Proxy;
 import com.auth0.jwt.*;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
+import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
@@ -24,6 +25,8 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.Date;
+import java.util.Objects;
 
 public class AuthServer {
 
@@ -55,15 +58,13 @@ public class AuthServer {
     try {
       Algorithm algorithm = Algorithm.RSA256(this.privateKey);
       String token = JWT.create()
-        .withClaim("name", "Emel")
-        .withIssuer("http://localhost:8888/")
-        .withClaim("kid", "1234")
+        .withExpiresAt(new Date(System.currentTimeMillis() + 300000))
         .sign(algorithm);
 
       JsonObject payload = new JsonObject();
       payload.put("access_token", token);
       payload.put("token_type", "jwt");
-      payload.put("expires_in", "3600");
+      payload.put("expires_in", "300");
       request.response().putHeader("Content-Type", "application/json;charset=UTF-8")
         .putHeader("Cache-Control", "no-store")
         .putHeader("Pragma", "no-cache")
@@ -100,8 +101,15 @@ public class AuthServer {
     server.requestHandler(request -> {
       // TODO: If a valid grant is not offered, Do not generate token
 
-      System.out.println();
-      generateToken(request);
+      System.out.println("These are the requestheaders: " + request.headers());
+      MultiMap headers = request.headers();
+      if(Objects.equals(headers.get("Authorization"), "Basic PGNsaWVudC1pZD46PGNsaWVudC1zZWNyZXQ+")) {
+        generateToken(request);
+      }else{
+        request.response().setStatusCode(318).end("Invalid claim");
+      }
+
+
     }).listen(8888);
 
   }

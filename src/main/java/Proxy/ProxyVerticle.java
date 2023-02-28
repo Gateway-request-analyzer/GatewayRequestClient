@@ -24,6 +24,7 @@ public class ProxyVerticle extends AbstractVerticle {
       .onComplete(socket -> {
         HttpServer server = this.vertx.createHttpServer();
         GraClient client = new GraClient(vertx, socket.result());
+        AuthClient authClient = new AuthClient(vertx);
         GraProxy proxy = new GraProxy(vertx, server, client);
       });
   }
