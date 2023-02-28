@@ -17,6 +17,8 @@ public class GraClient {
   public Vertx vertx;
   public WebSocket socket;
   private HttpServer server;
+  private boolean serverRunning;
+  private long timerDelay;
 
   //list of blocked users/ip/sessions
 
@@ -28,18 +30,24 @@ public class GraClient {
     this.vertx = vertx;
     this.socket = socket;
     setUpHandlers();
+    this.serverRunning = true;
   }
 
-  public void sendEvent(String ip, String userId, String session) throws RuntimeException{
+  public void sendEvent(String ip, String userId, String session){
 
-      JsonObject jo = new JsonObject();
-      jo.put("ip", ip).put("userId", userId).put("session", session);
+    if(serverRunning){
 
-      Buffer json = Json.encodeToBuffer(jo);
-      socket.writeBinaryMessage(json).onFailure(e -> {
-        throw new RuntimeException("failed to send event");
-      });
+        JsonObject jo = new JsonObject();
+        jo.put("ip", ip).put("userId", userId).put("session", session);
 
+        Buffer json = Json.encodeToBuffer(jo);
+        socket.writeBinaryMessage(json).onFailure(e -> {
+          throw new RuntimeException("failed to send event");
+        });
+
+    } else {
+      System.out.println("Server not running, attempting to reconnect");
+    }
   }
 
   /**
@@ -56,6 +64,13 @@ public class GraClient {
    * emptying the hashSet each minute
    */
   private void setUpHandlers(){
+
+    this.socket.exceptionHandler(handler -> {
+
+      this.serverRunning = false;
+      this.socketReconnect(3);
+
+    });
 
     this.socket.binaryMessageHandler(res -> {
 
@@ -125,7 +140,27 @@ public class GraClient {
     return (!blockedIP.containsKey(ip) && !blockedUserId.containsKey(userId) && !blockedSession.containsKey(session));
   }
 
-  public void setSocket(WebSocket socket){
-    this.socket = socket;
+
+  private void socketReconnect(long delay){
+    if(delay > 60){
+      delay = 60;
+    }
+    timerDelay = delay;
+
+    this.vertx.createHttpClient().webSocket(3000, "localhost", "/")
+      .onSuccess(socket -> {
+
+        this.socket = socket;
+        this.serverRunning = true;
+
+      }).onFailure(e -> {
+
+        this.vertx.setTimer(timerDelay*1000, handler -> {
+          this.socketReconnect(timerDelay*2);
+        });
+
+      });
   }
+
+
 }

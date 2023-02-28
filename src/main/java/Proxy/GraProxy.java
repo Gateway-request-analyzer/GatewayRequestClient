@@ -15,12 +15,10 @@ public class GraProxy {
   private GraClient internalClient;
   private WebClient webClient;
   private int statusCode;
-  private boolean connectionStatus;
 
   public GraProxy(Vertx vertx, HttpServer server, GraClient internalClient){
     this.vertx = vertx;
     this.server = server;
-    this.connectionStatus = true;
     this.internalClient = internalClient;
     this.webClient = WebClient.create(vertx);
     this.setUpHandlers();
@@ -48,10 +46,7 @@ public class GraProxy {
       System.out.println("URL from header: " + URL);
       if(internalClient.checkBlockedList(ip, session, userId)){
 
-        if(connectionStatus){
-          internalClient.sendEvent(headers.get("ip_address"), headers.get("userId"), headers.get("session"));
-        }
-
+        internalClient.sendEvent(headers.get("ip_address"), headers.get("userId"), headers.get("session"));
 
         // TODO: fetch public API and return data as response
         this.proxyEndpointFetch(URL, reqMethod, handler);
@@ -87,10 +82,6 @@ public class GraProxy {
         System.out.println("Error checking cat breeds: " + err.getMessage());
       });
 
-  }
-
-  public void setConnectionStatus(boolean status){
-    this.connectionStatus = status;
   }
 
 
