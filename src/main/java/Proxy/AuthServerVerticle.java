@@ -6,9 +6,8 @@ public class AuthServerVerticle extends AbstractVerticle {
 
   @Override
   public void start() {
-    vertx.createHttpServer().requestHandler(handler -> {
-      AuthServer authServer = new AuthServer();
-
-    }).listen(8888);
+    System.out.println("In AuthServerVerticle right now");
+      AuthServer authServer = new AuthServer(vertx.createHttpServer(), vertx);
+      System.out.println("authServer created");
   }
 }

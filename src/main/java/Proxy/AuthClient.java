@@ -18,8 +18,6 @@ public class AuthClient {
 
   // TODO: Use grant to get token from auth server to use when calling rateLimiter
   public void getToken(){
-    JsonObject grant = getGrant();
-
 
   }
 }
