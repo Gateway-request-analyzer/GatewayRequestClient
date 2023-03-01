@@ -14,12 +14,15 @@ public class GraProxy {
   private HttpServer server;
   private GraClient internalClient;
   private WebClient webClient;
+
+  private AuthClient authClient;
   private int statusCode;
 
-  public GraProxy(Vertx vertx, HttpServer server, GraClient internalClient){
+  public GraProxy(Vertx vertx, HttpServer server, GraClient internalClient, AuthClient authClient){
     this.vertx = vertx;
     this.server = server;
     this.internalClient = internalClient;
+    this.authClient = authClient;
     this.webClient = WebClient.create(vertx);
     this.setUpHandlers();
     /**
@@ -32,6 +35,7 @@ public class GraProxy {
 
 
     this.server.requestHandler(handler ->{
+
       internalClient.updateBlockedList();
 
       MultiMap headers = handler.headers();
@@ -46,7 +50,9 @@ public class GraProxy {
       System.out.println("URL from header: " + URL);
       if(internalClient.checkBlockedList(ip, session, userId)){
 
-        internalClient.sendEvent(headers.get("ip_address"), headers.get("userId"), headers.get("session"));
+        // TODO: skicka med korrekt JWT
+          internalClient.sendEvent(headers.get("ip_address"), headers.get("userId"), authClient.getToken());
+
 
         // TODO: fetch public API and return data as response
         this.proxyEndpointFetch(URL, reqMethod, handler);
@@ -54,6 +60,7 @@ public class GraProxy {
       } else {
         System.out.println("This user is currently blocked: " + ip);
         statusCode = 429;
+        handler.response().setStatusCode(429).end("This user is currently blocked");
       }
     }).listen(7890);
     System.out.println("handlers set up");
@@ -81,7 +88,6 @@ public class GraProxy {
       }).onFailure(err -> {
         System.out.println("Error checking cat breeds: " + err.getMessage());
       });
-
   }
 
 

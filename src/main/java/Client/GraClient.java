@@ -43,6 +43,8 @@ public class GraClient {
         Buffer json = Json.encodeToBuffer(jo);
         socket.writeBinaryMessage(json).onFailure(e -> {
           throw new RuntimeException("failed to send event");
+        }).onSuccess(handler -> {
+          System.out.println("Message sent");
         });
 
     } else {
@@ -66,6 +68,7 @@ public class GraClient {
   private void setUpHandlers(){
 
     this.socket.exceptionHandler(handler -> {
+      System.out.println("exceptionHandler invoked");
 
       this.serverRunning = false;
       this.socketReconnect(3);
@@ -74,7 +77,7 @@ public class GraClient {
 
     this.socket.binaryMessageHandler(res -> {
 
-      System.out.println("Response from server: " + res);
+      //System.out.println("Response from server: " + res);
       JsonObject json = (JsonObject) Json.decodeValue(res);
 
       //check if the message is for a single user/ip/sessions, type is "single"
@@ -98,10 +101,13 @@ public class GraClient {
 
         // iterate over entire list to add each value to blockList
         // Key = IP/session/userID, value = time of expiry
+        System.out.println("Response from server: " + json);
         json.remove("publishType");
+
         // {"publishType":"saveState","1.2.3.4":{"source":"rateLimiter","actionType":"blockedByIp","blockedTime":"1675426181182","value":"1.2.3.4","publishType":"single"},"abc123":{"source":"rateLimiter","actionType":"blockedByUserId","blockedTime":"1675426181186","value":"abc123","publishType":"single"},"abcdef":{"source":"rateLimiter","actionType":"blockedBySession","blockedTime":"1675426181184","value":"abcdef","publishType":"single"}}
         for(Map.Entry<String, Object> item : json){
 
+          System.out.println("Objects from saveState: ");
           System.out.println(item.getValue());
           JsonObject currentJson = new JsonObject(String.valueOf(item.getValue()));
 

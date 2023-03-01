@@ -6,11 +6,17 @@ import com.auth0.jwt.exceptions.JWTCreationException;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.oauth2.OAuth2Auth;
+import io.vertx.ext.auth.oauth2.OAuth2Options;
+import io.vertx.ext.auth.oauth2.impl.OAuth2API;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.OAuth2AuthHandler;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -26,7 +32,9 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 
 public class AuthServer {
 
@@ -34,18 +42,27 @@ public class AuthServer {
   RSAPublicKey publicKey;
   HttpServer server;
 
+  HashSet<String> clients = new HashSet<>();
+
   Vertx vertx;
 
   public AuthServer(HttpServer server, Vertx vertx){
-    System.out.println("reached authserver");
+
+    // TODO: kolla upp yaml och hur en legit config fil bör se ut
+    // TODO: samt helper funktion för att hämta config
+
+    // Assuming these are kept in a file in reality
+    clients.add("Basic " + Base64.getEncoder().encodeToString("client1:secret123".getBytes()));
+    clients.add("Basic " + Base64.getEncoder().encodeToString("client2:secret124".getBytes()));
+
+    // TODO: kolla upp exakt hur ofta nycklar ska genereras och hur den klassen bör se ut
     //AuthServerKeyGen genKeys = new AuthServerKeyGen();
+
     this.server = server;
     this.vertx = vertx;
     setUpHandlers(server);
   }
 
-  // TODO: Generate token and return it to requester
-  // Använd client credential, reject everything else
   private void generateToken(HttpServerRequest request){
 
     try {
@@ -65,6 +82,7 @@ public class AuthServer {
       payload.put("access_token", token);
       payload.put("token_type", "jwt");
       payload.put("expires_in", "300");
+      payload.put("refresh_token", "<refresh token>");
       request.response().putHeader("Content-Type", "application/json;charset=UTF-8")
         .putHeader("Cache-Control", "no-store")
         .putHeader("Pragma", "no-cache")
@@ -76,6 +94,7 @@ public class AuthServer {
 
   }
 
+  // TODO: fundera på ifall det finns ett snyggare sätt att läsa nycklarna från fil
   public void getKeys () throws NoSuchAlgorithmException, URISyntaxException, IOException, InvalidKeySpecException {
     String privateKeyContent = new String(Files.readAllBytes(Paths.get("private_key_pkcs8.pem")));
     String publicKeyContent = new String(Files.readAllBytes(Paths.get("public_key.pem")));
@@ -98,20 +117,32 @@ public class AuthServer {
 
   public void setUpHandlers(HttpServer server){
 
-    server.requestHandler(request -> {
-      // TODO: If a valid grant is not offered, Do not generate token
+    server.requestHandler(req -> {
+      System.out.println("abs uri: " + req.absoluteURI());
 
-      System.out.println("These are the requestheaders: " + request.headers());
-      MultiMap headers = request.headers();
-      if(Objects.equals(headers.get("Authorization"), "Basic PGNsaWVudC1pZD46PGNsaWVudC1zZWNyZXQ+")) {
-        generateToken(request);
-      }else{
-        request.response().setStatusCode(318).end("Invalid claim");
+      //Check that client id and client secret, path and method is ok
+      if (req.method() == HttpMethod.POST && "/oauth/token".equals(req.path())
+        && this.clients.contains(req.getHeader("Authorization"))) {
+        req.setExpectMultipart(true).bodyHandler(buffer -> {
+          System.out.println("buffer printed: " + buffer);
+          // How to check if request is correct type, in case of refresh tokens
+
+          if(buffer.toString().equals("grant_type=client_credentials")){
+            System.out.println("Headers looks like:");
+            System.out.println(req.headers());
+
+
+            // Generate token and return it to client
+            generateToken(req);
+
+          }else {
+            req.response().setStatusCode(400).end("no valid grant_type");
+          }
+        });
+      } else {
+        req.response().setStatusCode(400).end("no valid claim, method or url");
       }
 
-
     }).listen(8888);
-
   }
-
 }
