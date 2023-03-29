@@ -83,10 +83,13 @@ public class AuthServer {
       payload.put("token_type", "jwt");
       payload.put("expires_in", "300");
       payload.put("refresh_token", "<refresh token>");
-      request.response().putHeader("Content-Type", "application/json;charset=UTF-8")
+
+      request.response()
+        .putHeader("Content-Type", "application/json;charset=UTF-8")
         .putHeader("Cache-Control", "no-store")
         .putHeader("Pragma", "no-cache")
         .setStatusCode(200).end(payload.toBuffer());
+
     } catch (JWTCreationException exception){
       System.out.println("failed to create exception: " + exception.getMessage());
       // Invalid Signing configuration / Couldn't convert Claims.
@@ -124,8 +127,10 @@ public class AuthServer {
       if (req.method() == HttpMethod.POST && "/oauth/token".equals(req.path())
         && this.clients.contains(req.getHeader("Authorization"))) {
         req.setExpectMultipart(true).bodyHandler(buffer -> {
-          System.out.println("buffer printed: " + buffer);
+
+
           // How to check if request is correct type, in case of refresh tokens
+          System.out.println("buffer printed: " + buffer);
 
           if(buffer.toString().equals("grant_type=client_credentials")){
             System.out.println("Headers looks like:");

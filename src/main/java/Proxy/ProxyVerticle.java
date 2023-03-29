@@ -25,17 +25,14 @@ public class ProxyVerticle extends AbstractVerticle {
     CompositeFuture.all(List.of(
       generateFirstToken(authClient))
     ).onComplete(handler -> {
-     clientSetup();
+     proxySetup();
 
     }).onFailure(error -> {
       System.out.println("Error establishing pub/sub and/or redis connection: " + error.getMessage());
     });
-
-
-
   }
 
-  private void clientSetup(){
+  private void proxySetup(){
 
     WebSocketConnectOptions options = new WebSocketConnectOptions()
       .setHost("localhost")
@@ -43,6 +40,7 @@ public class ProxyVerticle extends AbstractVerticle {
       .setURI("/")
       .addHeader("Authorization", authClient.getToken());
 
+    // TODO: onFailure generate new token with incrementing timer
     this.vertx.createHttpClient().webSocket(options).onComplete(socket -> {
       HttpServer server = this.vertx.createHttpServer();
       GraClient client = new GraClient(vertx, socket.result());
@@ -56,15 +54,8 @@ public class ProxyVerticle extends AbstractVerticle {
       */
 
   }
-
   public Future<User> generateFirstToken(AuthClient authClient){
     return authClient.generateToken();
   }
-
-
-
-
-
-
 }
 

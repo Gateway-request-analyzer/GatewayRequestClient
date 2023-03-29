@@ -33,12 +33,12 @@ public class GraClient {
     this.serverRunning = true;
   }
 
-  public void sendEvent(String ip, String userId, String session){
+  public void sendEvent(String ip, String userId, String session, String accessToken){
 
     if(serverRunning){
 
         JsonObject jo = new JsonObject();
-        jo.put("ip", ip).put("userId", userId).put("session", session);
+        jo.put("ip", ip).put("userId", userId).put("session", session).put("Authorization", accessToken);
 
         Buffer json = Json.encodeToBuffer(jo);
         socket.writeBinaryMessage(json).onFailure(e -> {
