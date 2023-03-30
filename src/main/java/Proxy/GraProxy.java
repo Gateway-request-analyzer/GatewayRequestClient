@@ -10,6 +10,11 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.redis.client.impl.types.Multi;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.sql.SQLOutput;
 import java.util.function.Consumer;
 
 
@@ -70,7 +75,7 @@ public class GraProxy {
     System.out.println("handlers set up");
   }
 
-  private void proxyEndpointFetch(Consumer<Buffer> responeBody, Consumer<String> onFailure, String uri, MultiMap headers){
+  private void proxyEndpointFetch(Consumer<Buffer> responeBody, Consumer<String> onFailure, String uri, MultiMap headers) {
 
     /**
      * TODO:
@@ -79,22 +84,48 @@ public class GraProxy {
      * JWT token måste också autentiseras här utöver GRAclient.
      * Borde gå att kolla på URL-delen efter domänen, hitta aktuell funktion. Domänen kan förändras. (Split on first slash)
      */
+    try {
+      URL oldURL = new URL(uri);
+      String host = oldURL.getPath().split("/")[1];
+      String path = oldURL.getPath().replace("/" + host, "");
+
+      URI newURL =
+        new URI
+          (oldURL.getProtocol(), host, path, oldURL.getQuery(), oldURL.getRef());
+      System.out.println(newURL);
+      System.out.println("scheme: " + newURL.getScheme());
+      System.out.println("user info: " + newURL.getUserInfo());
+      System.out.println("host: " + newURL.getHost());
+      System.out.println("path: " + newURL.getPath());
+      System.out.println("query: " + newURL.getQuery());
+      System.out.println("Fragment/ref: " + newURL.getFragment());
+      System.out.println("Full URL: " + newURL);
+
+      this.webClient
+        .getAbs(String.valueOf(newURL))
+        //.putHeaders(headers)
+        .send()
+        .onSuccess(handler -> {
+          System.out.println("Message body received: " + handler.body().toString());
+          responeBody.accept(handler.body());
+
+        }).onFailure(err -> {
+          onFailure.accept("Error fetching API: " + err.getMessage());
+          System.out.println("Error fetching API: " + err.getMessage());
+        });
+
+    } catch (MalformedURLException | URISyntaxException e) {
+      System.out.println(e.getMessage());
+
+    }
+
+
+/*  Old way
     String[] prelString = uri.split("/", 4);
     String actualURL = "http://" + prelString[3];
-    System.out.println(actualURL);
+    System.out.println("Old chopped string: " + actualURL);
+*/
 
-    this.webClient
-      .getAbs(actualURL)
-      //.putHeaders(headers)
-      .send()
-      .onSuccess(handler -> {
-        System.out.println("Message body received: " + handler.body().toString());
-        responeBody.accept(handler.body());
-
-      }).onFailure(err -> {
-        onFailure.accept("Error fetching API: " + err.getMessage());
-        System.out.println("Error fetching API: " + err.getMessage());
-      });
   }
 
 

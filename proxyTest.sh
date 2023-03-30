@@ -6,7 +6,7 @@
 GRA_GATEWAY=http://localhost:7890
 
 # normal-user.sh - Typical dating app user
-curl -X POST -H "userId: abc123" -H "session: null" -H "ip_address: 1.2.3.4" -H "RequestMethod: GET" -H "RequestURL: https://GRAProxy.com/catfact.ninja/breeds" -H "Content-Type: application/x-www-form-url-encoded" -H "Authorization: Basic" -d grant_type=client_credentials    $GRA_GATEWAY/catfact.ninja/breeds                                  # The user opens the app and login. This returns the session that will be used for all following requests.
+curl -X POST -H "userId: abc123" -H "session: null" -H "ip_address: 1.2.3.4" -H "RequestMethod: GET" -H "RequestURL: https://GRAProxy.com/catfact.ninja/breeds" -H "Content-Type: application/x-www-form-url-encoded"   "$GRA_GATEWAY/user@catfact.ninja/breeds?name=networking#DOWNLOADING"                                  # The user opens the app and login. This returns the session that will be used for all following requests.
 sleep 0.2
 
 
