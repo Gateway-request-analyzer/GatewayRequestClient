@@ -34,24 +34,31 @@ public class ProxyVerticle extends AbstractVerticle {
 
   private void proxySetup(){
 
-    WebSocketConnectOptions options = new WebSocketConnectOptions()
-      .setHost("localhost")
-      .setPort(3000)
-      .setURI("/")
-      .addHeader("Authorization", authClient.getToken());
-
-    // TODO: onFailure generate new token with incrementing timer
+    /*
+    // TODO: Make client with consumer pattern, send in tempClient instead of socket and return a status when done to make sure execution is correct.
     this.vertx.createHttpClient().webSocket(options).onComplete(socket -> {
       HttpServer server = this.vertx.createHttpServer();
-      GraClient client = new GraClient(vertx, socket.result());
+      GraClient client = new GraClient(vertx, socket.result(), authClient);
       GraProxy proxy = new GraProxy(vertx, server, client, authClient);
-    });
-/*
-    this.vertx.createHttpClient().webSocket(3000, "localhost", "/")
-      .onComplete(socket -> {
 
+    });
+    */
+
+    GraClient client = new GraClient(vertx, authClient);
+
+    client.webSocketSetup(success -> {
+      System.out.println(success);
+      HttpServer server = this.vertx.createHttpServer();
+      GraProxy proxy = new GraProxy(vertx, server, client, authClient);
+    }, error -> {
+      this.vertx.setTimer(10*1000, handler -> {
+        System.out.println(error);
+        this.proxySetup();
       });
-      */
+    });
+
+
+
 
   }
   public Future<User> generateFirstToken(AuthClient authClient){

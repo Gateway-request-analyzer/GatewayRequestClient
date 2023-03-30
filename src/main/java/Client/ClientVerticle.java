@@ -1,5 +1,6 @@
 package Client;
 
+import Proxy.AuthClient;
 import io.vertx.core.*;
 import io.vertx.core.http.*;
 import java.util.Random;
@@ -13,6 +14,7 @@ public class ClientVerticle extends AbstractVerticle {
 
   private HttpClient httpClient;
   private WebSocket socket;
+  private AuthClient auth;
 
   @Override
   public void start() throws Exception {
@@ -24,7 +26,7 @@ public class ClientVerticle extends AbstractVerticle {
       this.vertx.createHttpClient().webSocket(3000, "localhost", "/")
         .onComplete(socket -> {
             HttpServer server = this.vertx.createHttpServer();
-            GraClient client = new GraClient(vertx, socket.result());
+            GraClient client = new GraClient(vertx, auth);
         });
 
   }

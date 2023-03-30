@@ -1,5 +1,6 @@
 package Client;
 
+import Proxy.AuthClient;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -19,6 +20,8 @@ public class GraClient {
   private HttpServer server;
   private boolean serverRunning;
   private long timerDelay;
+  private AuthClient auth;
+  private HttpClient client;
 
   //list of blocked users/ip/sessions
 
@@ -26,12 +29,14 @@ public class GraClient {
   private HashMap<String, Long> blockedSession = new HashMap<>();
   private HashMap<String, Long> blockedUserId = new HashMap<>();
 
-  public GraClient(Vertx vertx, WebSocket socket) {
+  //TODO: Make function with consumer pattern that creates the server in verticle after socket is open.
+  //TODO: Then, add reconnect functionality with a HttpClient restart.
+  public GraClient(Vertx vertx, AuthClient auth) {
     this.vertx = vertx;
-    this.socket = socket;
-    setUpHandlers();
-    this.serverRunning = true;
+    this.auth = auth;
   }
+
+
 
   public void sendEvent(String ip, String userId, String session, String accessToken){
 
@@ -75,7 +80,18 @@ public class GraClient {
 
     });
 
+    this.socket.closeHandler(handler -> {
+
+      System.out.println("closeHandler invoked, with reason " + socket.closeReason() + " and statuscode " + socket.closeStatusCode());
+
+      this.serverRunning = false;
+      this.socketReconnect(3);
+
+    });
+
     this.socket.binaryMessageHandler(res -> {
+
+
 
       //System.out.println("Response from server: " + res);
       JsonObject json = (JsonObject) Json.decodeValue(res);
@@ -146,6 +162,40 @@ public class GraClient {
     return (!blockedIP.containsKey(ip) && !blockedUserId.containsKey(userId) && !blockedSession.containsKey(session));
   }
 
+  private WebSocketConnectOptions createOptions(){
+    return new WebSocketConnectOptions()
+      .setHost("localhost")
+      .setPort(3000)
+      .setURI("/")
+      .addHeader("Authorization", auth.refreshToken());
+  }
+
+
+  public void webSocketSetup(Consumer<String> socketCreate, Consumer<String> socketCreateFailure) {
+
+    if(this.client != null){
+      this.client.close();
+    }
+    this.client = this.vertx.createHttpClient();
+
+    WebSocketConnectOptions options = this.createOptions();
+
+    this.client.webSocket(options).onSuccess(handler -> {
+      this.socket = handler;
+      this.serverRunning = true;
+      setUpHandlers();
+      socketCreate.accept("Connection successful");
+    }).onFailure(error -> {
+      System.out.println("Connection failed: " + error.getMessage());
+      socketCreateFailure.accept("Connection failed" + error.getMessage());
+    });
+
+  }
+
+  private void checkTokenExpiry(String current){
+
+  }
+
 
   private void socketReconnect(long delay){
     if(delay > 60){
@@ -153,20 +203,30 @@ public class GraClient {
     }
     timerDelay = delay;
 
-    this.vertx.createHttpClient().webSocket(3000, "localhost", "/")
+    if(this.client != null){
+      this.client.close();
+    }
+
+    this.client = this.vertx.createHttpClient();
+
+    WebSocketConnectOptions options = this.createOptions();
+
+
+    this.client.webSocket(options)
       .onSuccess(socket -> {
 
         this.socket = socket;
         this.serverRunning = true;
+        this.setUpHandlers();
+        System.out.println("Reconnect successful");
 
       }).onFailure(e -> {
 
+        System.out.println("Attempting to reconnect in " + timerDelay + " seconds");
         this.vertx.setTimer(timerDelay*1000, handler -> {
           this.socketReconnect(timerDelay*2);
         });
 
       });
   }
-
-
 }

@@ -107,10 +107,10 @@ public class AuthServer {
 
     KeyFactory kf = KeyFactory.getInstance("RSA");
 
-    PKCS8EncodedKeySpec keySpecPKCS8 = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyContent));
+    PKCS8EncodedKeySpec keySpecPKCS8 = new PKCS8EncodedKeySpec(Base64.getMimeDecoder().decode(privateKeyContent));
     RSAPrivateKey privKey = (RSAPrivateKey) kf.generatePrivate(keySpecPKCS8);
 
-    X509EncodedKeySpec keySpecX509 = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyContent));
+    X509EncodedKeySpec keySpecX509 = new X509EncodedKeySpec(Base64.getMimeDecoder().decode(publicKeyContent));
     RSAPublicKey pubKey = (RSAPublicKey) kf.generatePublic(keySpecX509);
 
     this.privateKey = privKey;
