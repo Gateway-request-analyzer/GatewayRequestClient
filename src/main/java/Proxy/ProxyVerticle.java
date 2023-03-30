@@ -19,12 +19,11 @@ public class ProxyVerticle extends AbstractVerticle {
   @Override
   public void start() {
 
-  vertx.deployVerticle(new AuthServerVerticle());
-
   this.authClient = new AuthClient(vertx);
     CompositeFuture.all(List.of(
       generateFirstToken(authClient))
     ).onComplete(handler -> {
+      System.out.println("Successfully received token from auth server");
      proxySetup();
 
     }).onFailure(error -> {
