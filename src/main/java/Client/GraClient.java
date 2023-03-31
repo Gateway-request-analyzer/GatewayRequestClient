@@ -7,6 +7,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.*;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.handler.HttpException;
 
 import java.net.ConnectException;
 import java.util.*;
@@ -22,6 +23,7 @@ public class GraClient {
   private long timerDelay;
   private AuthClient auth;
   private HttpClient client;
+  private clientBufferHelper bufferHelper;
 
   //list of blocked users/ip/sessions
 
@@ -29,21 +31,19 @@ public class GraClient {
   private HashMap<String, Long> blockedSession = new HashMap<>();
   private HashMap<String, Long> blockedUserId = new HashMap<>();
 
-  //TODO: Make function with consumer pattern that creates the server in verticle after socket is open.
-  //TODO: Then, add reconnect functionality with a HttpClient restart.
   public GraClient(Vertx vertx, AuthClient auth) {
     this.vertx = vertx;
     this.auth = auth;
+    this.bufferHelper = new clientBufferHelper();
+
   }
 
 
-
   public void sendEvent(String ip, String userId, String session, String accessToken){
+    JsonObject jo = new JsonObject();
+    jo.put("ip", ip).put("userId", userId).put("session", session).put("Authorization", accessToken);
 
     if(serverRunning){
-
-        JsonObject jo = new JsonObject();
-        jo.put("ip", ip).put("userId", userId).put("session", session).put("Authorization", accessToken);
 
         Buffer json = Json.encodeToBuffer(jo);
         socket.writeBinaryMessage(json).onFailure(e -> {
@@ -53,8 +53,30 @@ public class GraClient {
         });
 
     } else {
+      bufferHelper.addElement(jo);
       System.out.println("Server not running, attempting to reconnect");
     }
+  }
+  //TODO: Make event class and change this to sendEvent
+  private void sendBuffer(Consumer<String> buf, Consumer<String> bufFailure){
+      LinkedList<JsonObject> list = bufferHelper.getBuffer();
+
+      Iterator<JsonObject> it = list.iterator();
+      try{
+        while(it.hasNext()){
+
+          Buffer json = Json.encodeToBuffer(it.next());
+          socket.writeBinaryMessage(json).onFailure(e -> {
+            throw new RuntimeException("failed to send event");
+          }).onSuccess(handler -> {
+            System.out.println("Message sent");
+          });
+        }
+      } catch(HttpException e){
+        bufFailure.accept(e.getMessage());
+      }
+
+      buf.accept("Buffer sent successfully");
   }
 
   /**
@@ -70,6 +92,7 @@ public class GraClient {
    * vertx.setPeriodic unblocks the currently blocked users/ip/sessions by
    * emptying the hashSet each minute
    */
+
   private void setUpHandlers(){
 
     this.socket.exceptionHandler(handler -> {
@@ -218,6 +241,12 @@ public class GraClient {
         this.socket = socket;
         this.serverRunning = true;
         this.setUpHandlers();
+        this.sendBuffer(bufSend -> {
+          System.out.println("Buffer sent successfully");
+          this.bufferHelper.resetBuffer();
+        }, bufError -> {
+          System.out.println("Error sending buffer: ");
+        });
         System.out.println("Reconnect successful");
 
       }).onFailure(e -> {
