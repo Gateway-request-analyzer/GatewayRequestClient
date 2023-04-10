@@ -3,8 +3,10 @@ package Proxy;
 import Client.GraClient;
 import io.vertx.core.*;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.http.RequestOptions;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
@@ -47,10 +49,12 @@ public class GraProxy {
       graClient.updateBlockedList();
 
       MultiMap headers = handler.headers();
+      HttpMethod method = handler.method();
       String ip = headers.get("ip_address");
       String session = headers.get("session");
       String userId = headers.get("userId");
       String uri = handler.absoluteURI();
+
 
       System.out.println("URL from header: " + uri);
       if(graClient.checkBlockedList(ip, session, userId)){
@@ -64,7 +68,8 @@ public class GraProxy {
           handler.response().setStatusCode(200).end(responseBody);
         }, onFailure -> {
           System.out.println(onFailure);
-        }, uri, headers);
+          handler.response().setStatusCode(400).end(onFailure);
+        }, uri, headers, method);
        // statusCode = 200;
       } else {
         System.out.println("This user is currently blocked: " + ip);
@@ -75,7 +80,7 @@ public class GraProxy {
     System.out.println("handlers set up");
   }
 
-  private void proxyEndpointFetch(Consumer<Buffer> responeBody, Consumer<String> onFailure, String uri, MultiMap headers) {
+  private void proxyEndpointFetch(Consumer<Buffer> responeBody, Consumer<String> onFailure, String uri, MultiMap headers, HttpMethod method) {
 
     /**
      * TODO:
@@ -85,13 +90,19 @@ public class GraProxy {
      * Borde gå att kolla på URL-delen efter domänen, hitta aktuell funktion. Domänen kan förändras. (Split on first slash)
      */
     try {
+      // $GRA_GATEWAY/catfact.ninja/breeds"
       URL oldURL = new URL(uri);
       String host = oldURL.getPath().split("/")[1];
       String path = oldURL.getPath().replace("/" + host, "");
 
+      // TODO: Look in config for correct protocol
+      // TODO: Vet bas-url från kund
+
       URI newURL =
         new URI
           (oldURL.getProtocol(), host, path, oldURL.getQuery(), oldURL.getRef());
+
+      System.out.println(" ");
       System.out.println(newURL);
       System.out.println("scheme: " + newURL.getScheme());
       System.out.println("user info: " + newURL.getUserInfo());
@@ -101,11 +112,17 @@ public class GraProxy {
       System.out.println("Fragment/ref: " + newURL.getFragment());
       System.out.println("Full URL: " + newURL);
 
+      System.out.println(" ");
+      System.out.println("Headers on request:");
+      System.out.println(headers);
+
+
       this.webClient
-        .getAbs(String.valueOf(newURL))
-        //.putHeaders(headers)
+        .requestAbs(method, String.valueOf(newURL))
         .send()
         .onSuccess(handler -> {
+
+          System.out.println(handler.statusCode());
           System.out.println("Message body received: " + handler.body().toString());
           responeBody.accept(handler.body());
 
@@ -115,8 +132,7 @@ public class GraProxy {
         });
 
     } catch (MalformedURLException | URISyntaxException e) {
-      System.out.println(e.getMessage());
-
+      System.out.println("Error parsing URL" + e.getMessage());
     }
 
 

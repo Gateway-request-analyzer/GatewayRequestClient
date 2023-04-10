@@ -1,0 +1,7 @@
+version: "3"
+
+services:
+  gra-proxy:
+    build: .
+    ports:
+      - "7890:7890"

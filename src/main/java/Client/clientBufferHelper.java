@@ -10,6 +10,7 @@ public class clientBufferHelper {
     this.buffer = new LinkedList<JsonObject>();
   }
 
+
   public void addElement(JsonObject obj){
     if(!this.bufferController()){
       this.buffer.add(obj);
@@ -22,6 +23,7 @@ public class clientBufferHelper {
     return this.buffer;
   }
 
+  //TODO: Change name to show what it actually does
   private boolean bufferController(){
       if(this.buffer.size() > 15){
         return true;

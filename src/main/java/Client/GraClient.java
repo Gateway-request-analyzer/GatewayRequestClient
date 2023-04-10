@@ -187,7 +187,7 @@ public class GraClient {
 
   private WebSocketConnectOptions createOptions(){
     return new WebSocketConnectOptions()
-      .setHost("localhost")
+      .setHost("192.168.0.139")
       .setPort(3000)
       .setURI("/")
       .addHeader("Authorization", auth.refreshToken());
@@ -207,10 +207,10 @@ public class GraClient {
       this.socket = handler;
       this.serverRunning = true;
       setUpHandlers();
-      socketCreate.accept("Connection successful");
+      socketCreate.accept("Connection to GRAserver successful");
     }).onFailure(error -> {
       System.out.println("Connection failed: " + error.getMessage());
-      socketCreateFailure.accept("Connection failed" + error.getMessage());
+      socketCreateFailure.accept("Connection to GRAserver failed: " + error.getMessage());
     });
 
   }

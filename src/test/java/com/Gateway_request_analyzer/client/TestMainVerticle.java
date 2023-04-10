@@ -1,5 +1,6 @@
 package com.Gateway_request_analyzer.client;
 
+import Proxy.ProxyVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -12,7 +13,7 @@ public class TestMainVerticle {
 
   @BeforeEach
   void deploy_verticle(Vertx vertx, VertxTestContext testContext) {
-    vertx.deployVerticle(new DepVerticle(), testContext.succeeding(id -> testContext.completeNow()));
+    vertx.deployVerticle(new ProxyVerticle(), testContext.succeeding(id -> testContext.completeNow()));
   }
 
   @Test
