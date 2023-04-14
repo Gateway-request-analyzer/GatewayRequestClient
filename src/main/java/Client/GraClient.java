@@ -62,15 +62,22 @@ public class GraClient {
       LinkedList<JsonObject> list = bufferHelper.getBuffer();
 
       Iterator<JsonObject> it = list.iterator();
+      JsonObject temp;
       try{
         while(it.hasNext()){
+          temp = it.next();
+          Buffer json = Json.encodeToBuffer(temp);
 
-          Buffer json = Json.encodeToBuffer(it.next());
-          socket.writeBinaryMessage(json).onFailure(e -> {
-            throw new RuntimeException("failed to send event");
-          }).onSuccess(handler -> {
-            System.out.println("Message sent");
-          });
+          if(this.checkBlockedList(temp.getString("ip"), temp.getString("session"), temp.getString("userId"))){
+            socket.writeBinaryMessage(json).onFailure(e -> {
+              throw new RuntimeException("failed to send event");
+            }).onSuccess(handler -> {
+              System.out.println("Message sent");
+            });
+          } else {
+            System.out.println("User currently blocked");
+          }
+
         }
       } catch(HttpException e){
         bufFailure.accept(e.getMessage());
@@ -118,7 +125,7 @@ public class GraClient {
 
       //System.out.println("Response from server: " + res);
       JsonObject json = (JsonObject) Json.decodeValue(res);
-
+      System.out.println("Block received: " + json.getString("actionType"));
       //check if the message is for a single user/ip/sessions, type is "single"
       if(Objects.equals(json.getString("publishType"), "single")) {
 
@@ -187,7 +194,7 @@ public class GraClient {
 
   private WebSocketConnectOptions createOptions(){
     return new WebSocketConnectOptions()
-      .setHost("192.168.0.139")
+      .setHost("localhost")
       .setPort(3000)
       .setURI("/")
       .addHeader("Authorization", auth.refreshToken());

@@ -33,16 +33,6 @@ public class ProxyVerticle extends AbstractVerticle {
 
   private void proxySetup(){
 
-    /*
-    // TODO: Make client with consumer pattern, send in tempClient instead of socket and return a status when done to make sure execution is correct.
-    this.vertx.createHttpClient().webSocket(options).onComplete(socket -> {
-      HttpServer server = this.vertx.createHttpServer();
-      GraClient client = new GraClient(vertx, socket.result(), authClient);
-      GraProxy proxy = new GraProxy(vertx, server, client, authClient);
-
-    });
-    */
-
     GraClient client = new GraClient(vertx, authClient);
 
     client.webSocketSetup(success -> {

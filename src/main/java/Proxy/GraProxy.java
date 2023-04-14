@@ -5,18 +5,12 @@ import io.vertx.core.*;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
-import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.http.RequestOptions;
-import io.vertx.ext.web.client.HttpRequest;
-import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
-import io.vertx.redis.client.impl.types.Multi;
 
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.sql.SQLOutput;
 import java.util.function.Consumer;
 
 
@@ -80,7 +74,7 @@ public class GraProxy {
     System.out.println("handlers set up");
   }
 
-  private void proxyEndpointFetch(Consumer<Buffer> responeBody, Consumer<String> onFailure, String uri, MultiMap headers, HttpMethod method) {
+  private void proxyEndpointFetch(Consumer<Buffer> responseBody, Consumer<String> onFailure, String uri, MultiMap headers, HttpMethod method) {
 
     /**
      * TODO:
@@ -124,7 +118,7 @@ public class GraProxy {
 
           System.out.println(handler.statusCode());
           System.out.println("Message body received: " + handler.body().toString());
-          responeBody.accept(handler.body());
+          responseBody.accept(handler.body());
 
         }).onFailure(err -> {
           onFailure.accept("Error fetching API: " + err.getMessage());

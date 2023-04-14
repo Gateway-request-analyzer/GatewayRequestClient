@@ -36,7 +36,7 @@ public class AuthClient {
       .setFlow(OAuth2FlowType.CLIENT)
       .setClientId("client1")
       .setClientSecret("secret123")
-      .setSite("http://192.168.0.139:8888");
+      .setSite("http://localhost:8888");
 
 
 // Initialize the OAuth2 Library
@@ -47,6 +47,8 @@ public class AuthClient {
     return oauth2.authenticate(tokenConfig)
       .onSuccess(user -> {
         this.user = user;
+
+        System.out.println("This is the user: " + this.user);
 
         String tokenStr = user.get("access_token");
         String expTime = user.get("expires_in");

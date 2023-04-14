@@ -1,5 +1,4 @@
 #!/bin/bash
-#!/bin/zsh
 
 #run using Git Bash promt: sh normal-user.se
 
