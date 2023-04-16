@@ -36,7 +36,7 @@ public class AuthClient {
       .setFlow(OAuth2FlowType.CLIENT)
       .setClientId("client1")
       .setClientSecret("secret123")
-      .setSite("http://localhost:8888");
+      .setSite("http://auth-server:8888");
 
 
 // Initialize the OAuth2 Library

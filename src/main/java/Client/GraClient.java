@@ -194,7 +194,7 @@ public class GraClient {
 
   private WebSocketConnectOptions createOptions(){
     return new WebSocketConnectOptions()
-      .setHost("localhost")
+      .setHost("gra-server")
       .setPort(3000)
       .setURI("/")
       .addHeader("Authorization", auth.refreshToken());
