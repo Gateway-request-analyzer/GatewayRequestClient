@@ -39,9 +39,9 @@ public class GraClient {
   }
 
 
-  public void sendEvent(String ip, String userId, String session, String accessToken){
+  public void sendEvent(String ip, String userId, String session, String path, String accessToken){
     JsonObject jo = new JsonObject();
-    jo.put("ip", ip).put("userId", userId).put("session", session).put("Authorization", accessToken);
+    jo.put("ip", ip).put("userId", userId).put("session", session).put("Authorization", accessToken).put("URI", path);
 
     if(serverRunning){
 

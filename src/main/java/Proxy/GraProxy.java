@@ -48,13 +48,18 @@ public class GraProxy {
       String session = headers.get("session");
       String userId = headers.get("userId");
       String uri = handler.absoluteURI();
-
+      String path;
+      try {
+        path = new URI(uri).getPath();
+      } catch (URISyntaxException e) {
+        throw new RuntimeException(e);
+      }
 
       System.out.println("URL from header: " + uri);
       if(graClient.checkBlockedList(ip, session, userId)){
 
         // TODO: skicka token som en egen variabel istället för att sno session platsen
-          graClient.sendEvent(headers.get("ip_address"), headers.get("userId"), session, authClient.getToken());
+          graClient.sendEvent(headers.get("ip_address"), headers.get("userId"), session, path, authClient.getToken());
 
 
         // fetch public API and return data as response
