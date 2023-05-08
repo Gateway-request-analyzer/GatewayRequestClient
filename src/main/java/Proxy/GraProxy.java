@@ -47,29 +47,33 @@ public class GraProxy {
       String ip = headers.get("ip_address");
       String session = headers.get("session");
       String userId = headers.get("userId");
+
       String uri = handler.absoluteURI();
-      String path;
+      URI endPoint = null;
       try {
-        path = new URI(uri).getPath();
-      } catch (URISyntaxException e) {
-        throw new RuntimeException(e);
+        endPoint = proxiedEndPoint(uri);
+      } catch (URISyntaxException | MalformedURLException e) {
+        System.out.println("Error in parsing the following URI: " + uri);
+        System.out.println("With the following exception: " + e.getMessage());
       }
 
       System.out.println("URL from header: " + uri);
       if(graClient.checkBlockedList(ip, session, userId)){
 
         // TODO: skicka token som en egen variabel istället för att sno session platsen
-          graClient.sendEvent(headers.get("ip_address"), headers.get("userId"), session, path, authClient.getToken());
+        if(endPoint != null) {
+          graClient.sendEvent(headers.get("ip_address"), headers.get("userId"), headers.get("session"), endPoint.getPath(), authClient.getToken());
 
 
-        // fetch public API and return data as response
-        this.proxyEndpointFetch(responseBody -> {
-          handler.response().setStatusCode(200).end(responseBody);
-        }, onFailure -> {
-          System.out.println(onFailure);
-          handler.response().setStatusCode(400).end(onFailure);
-        }, uri, headers, method);
-       // statusCode = 200;
+          // fetch public API and return data as response
+          this.proxyEndpointFetch(responseBody -> {
+            handler.response().setStatusCode(200).end(responseBody);
+          }, onFailure -> {
+            System.out.println(onFailure);
+            handler.response().setStatusCode(400).end(onFailure);
+          }, endPoint, headers, method);
+          // statusCode = 200;
+        }
       } else {
         System.out.println("This user is currently blocked: " + ip);
         statusCode = 429;
@@ -79,45 +83,13 @@ public class GraProxy {
     System.out.println("handlers set up");
   }
 
-  private void proxyEndpointFetch(Consumer<Buffer> responseBody, Consumer<String> onFailure, String uri, MultiMap headers, HttpMethod method) {
+  private void proxyEndpointFetch(Consumer<Buffer> responseBody, Consumer<String> onFailure, URI uri, MultiMap headers, HttpMethod method) {
 
-    /**
-     * TODO:
-     * Om det är Post request måste all data skickas med.
-     * Headers måste skickas med.
-     * JWT token måste också autentiseras här utöver GRAclient.
-     * Borde gå att kolla på URL-delen efter domänen, hitta aktuell funktion. Domänen kan förändras. (Split on first slash)
-     */
-    try {
-      // $GRA_GATEWAY/catfact.ninja/breeds"
-      URL oldURL = new URL(uri);
-      String host = oldURL.getPath().split("/")[1];
-      String path = oldURL.getPath().replace("/" + host, "");
-
-      // TODO: Look in config for correct protocol
-      // TODO: Vet bas-url från kund
-
-      URI newURL =
-        new URI
-          (oldURL.getProtocol(), host, path, oldURL.getQuery(), oldURL.getRef());
-
-      System.out.println(" ");
-      System.out.println(newURL);
-      System.out.println("scheme: " + newURL.getScheme());
-      System.out.println("user info: " + newURL.getUserInfo());
-      System.out.println("host: " + newURL.getHost());
-      System.out.println("path: " + newURL.getPath());
-      System.out.println("query: " + newURL.getQuery());
-      System.out.println("Fragment/ref: " + newURL.getFragment());
-      System.out.println("Full URL: " + newURL);
-
-      System.out.println(" ");
       System.out.println("Headers on request:");
       System.out.println(headers);
 
-
       this.webClient
-        .requestAbs(method, String.valueOf(newURL))
+        .requestAbs(method, String.valueOf(uri))
         .send()
         .onSuccess(handler -> {
 
@@ -130,18 +102,20 @@ public class GraProxy {
           System.out.println("Error fetching API: " + err.getMessage());
         });
 
-    } catch (MalformedURLException | URISyntaxException e) {
-      System.out.println("Error parsing URL" + e.getMessage());
     }
 
 
-/*  Old way
-    String[] prelString = uri.split("/", 4);
-    String actualURL = "http://" + prelString[3];
-    System.out.println("Old chopped string: " + actualURL);
-*/
+
+  private URI proxiedEndPoint(String uri) throws URISyntaxException, MalformedURLException {
+
+      // $GRA_GATEWAY/localhost:8081/breeds"
+      URL oldURL = new URL(uri);
+      String host = oldURL.getPath().split("/")[1];
+      String path = oldURL.getPath().replace("/" + host, "");
+      // TODO: Look in config for correct protocol
+      // TODO: Vet bas-url från kund
+      return new URI(oldURL.getProtocol(), host, path, oldURL.getQuery(), oldURL.getRef());
 
   }
-
 
 }

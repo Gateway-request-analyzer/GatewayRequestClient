@@ -1,6 +1,7 @@
 package Proxy;
 
 import Client.GraClient;
+import Testing.TestingEndpoint;
 import io.vertx.core.*;
 import io.vertx.core.http.*;
 import io.vertx.ext.auth.User;
@@ -18,6 +19,7 @@ public class ProxyVerticle extends AbstractVerticle {
 
   @Override
   public void start() {
+    vertx.deployVerticle(new TestingEndpoint());
 
   this.authClient = new AuthClient(vertx);
     CompositeFuture.all(List.of(
