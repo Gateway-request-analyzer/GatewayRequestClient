@@ -20,14 +20,11 @@ public class GraProxy {
   private GraClient graClient;
   private WebClient webClient;
 
-  private AuthClient authClient;
-  private int statusCode;
 
-  public GraProxy(Vertx vertx, HttpServer server, GraClient graClient, AuthClient authClient){
+  public GraProxy(Vertx vertx, HttpServer server, GraClient graClient){
     this.vertx = vertx;
     this.server = server;
     this.graClient = graClient;
-    this.authClient = authClient;
     this.webClient = WebClient.create(vertx);
     this.setUpHandlers();
     // TODO: read config file and save in datatype to check incoming requests
@@ -59,10 +56,11 @@ public class GraProxy {
 
       System.out.println("URL from header: " + uri);
       if(graClient.checkBlockedList(ip, session, userId)){
+        // TODO: Add challenge here if user needs to be verified?
+        // TODO: Respond with appropriate body/status code for verification
 
-        // TODO: skicka token som en egen variabel istället för att sno session platsen
         if(endPoint != null) {
-          graClient.sendEvent(headers.get("ip_address"), headers.get("userId"), headers.get("session"), endPoint.getPath(), authClient.getToken());
+          graClient.sendEvent(headers.get("ip_address"), headers.get("userId"), headers.get("session"), endPoint.getPath());
 
 
           // fetch public API and return data as response
@@ -76,7 +74,6 @@ public class GraProxy {
         }
       } else {
         System.out.println("This user is currently blocked: " + ip);
-        statusCode = 429;
         handler.response().setStatusCode(429).end("This user is currently blocked");
       }
     }).listen(7890);

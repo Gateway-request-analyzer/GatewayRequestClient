@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/local/bin/bash
 
 # Configure URL to the GRA client HTTP server (the "gateway")
 
-readarray -t array < baseStressTest.txt
+readarray -t array < baseNormalUser.txt
 
 for i in {1..100}
 do

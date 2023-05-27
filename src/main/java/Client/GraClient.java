@@ -39,9 +39,11 @@ public class GraClient {
   }
 
 
-  public void sendEvent(String ip, String userId, String session, String path, String accessToken){
+  public void sendEvent(String ip, String userId, String session, String path){
+    // TODO: Add challenge here if user needs to be verified?
+
     JsonObject jo = new JsonObject();
-    jo.put("ip", ip).put("userId", userId).put("session", session).put("Authorization", accessToken).put("URI", path);
+    jo.put("ip", ip).put("userId", userId).put("session", session).put("Authorization", auth.getToken()).put("URI", path);
 
     if(serverRunning){
 
@@ -121,8 +123,6 @@ public class GraClient {
 
     this.socket.binaryMessageHandler(res -> {
 
-
-
       //System.out.println("Response from server: " + res);
       JsonObject json = (JsonObject) Json.decodeValue(res);
       System.out.println("Block received: " + json.getString("actionType"));
@@ -139,6 +139,9 @@ public class GraClient {
           case "blockedByUserId":
             blockedUserId.put(json.getString("value"), Long.parseLong(json.getString("blockedTime")));
             break;
+          case "verify":
+            // TODO: Add user to a list which is checked to challenge a user to verify itself
+            System.out.println("User " + json.getString("value") + " have been required to verify itself");
           default: break;
         }
 

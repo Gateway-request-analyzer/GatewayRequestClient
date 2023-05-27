@@ -40,7 +40,7 @@ public class ProxyVerticle extends AbstractVerticle {
     client.webSocketSetup(success -> {
       System.out.println(success);
       HttpServer server = this.vertx.createHttpServer();
-      GraProxy proxy = new GraProxy(vertx, server, client, authClient);
+      GraProxy proxy = new GraProxy(vertx, server, client);
     }, error -> {
       this.vertx.setTimer(10*1000, handler -> {
         System.out.println(error);
