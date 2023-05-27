@@ -1,38 +1,38 @@
 package Client;
 import io.vertx.core.json.JsonObject;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class clientBufferHelper {
-  private LinkedList<JsonObject> buffer;
+  private ArrayList<JsonObject> buffer;
 
   public clientBufferHelper(){
-    this.buffer = new LinkedList<JsonObject>();
+    this.buffer = new ArrayList<JsonObject>();
   }
 
 
   public void addElement(JsonObject obj){
-    if(!this.bufferController()){
+    if(!this.isBufferFull()){
       this.buffer.add(obj);
     } else {
       System.out.println("Buffer currently full");
     }
   }
 
-  public LinkedList<JsonObject> getBuffer(){
+  public ArrayList<JsonObject> getBuffer(){
     return this.buffer;
   }
 
-  //TODO: Change name to show what it actually does
-  private boolean bufferController(){
-      if(this.buffer.size() > 15){
+  private boolean isBufferFull(){
+      if(this.buffer.size() > 3000){
         return true;
       }
         return false;
   }
 
   public void resetBuffer(){
-    this.buffer = new LinkedList<JsonObject>();
+    this.buffer = new ArrayList<JsonObject>();
   }
 
 }

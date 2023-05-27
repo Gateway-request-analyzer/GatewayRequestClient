@@ -59,9 +59,9 @@ public class GraClient {
       System.out.println("Server not running, attempting to reconnect");
     }
   }
-  //TODO: Make event class and change this to sendEvent
+
   private void sendBuffer(Consumer<String> buf, Consumer<String> bufFailure){
-      LinkedList<JsonObject> list = bufferHelper.getBuffer();
+      ArrayList<JsonObject> list = bufferHelper.getBuffer();
 
       Iterator<JsonObject> it = list.iterator();
       JsonObject temp;
